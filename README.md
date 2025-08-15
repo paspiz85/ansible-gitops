@@ -36,29 +36,6 @@ sudo rm -rf /var/lib/ansible-gitops/test-infra
 
 ---
 
-### 🔑 Gestione dei segreti con Ansible Vault (Editor)
-
-Per prima cosa installare ```ansible-vault-editor```
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/paspiz85/ansible-gitops/main/ansible-vault-editor/install.sh)
-```
-
-Scaricare la chiave di un host con:
-
-```bash
-ssh pi@peppe.local "sudo cat /etc/ansible-gitops/ansible-vault.key" | ansible-vault-editor -c peppe
-```
-
-Per creare/modificare un file di secret:
-
-```bash
-export EDITOR="subl -w"
-ansible-vault-editor peppe inventory/prod/secrets/peppe.yml
-```
-
----
-
 ### 👤 Configurazione utente ansible su altre macchine
 
 Accedere alla macchina remota con un utente con privilegi amministrativi e creare l'utente con:
