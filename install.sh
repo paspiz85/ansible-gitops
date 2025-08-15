@@ -55,8 +55,10 @@ fi
 # ==========================
 # Utente di servizio con home e privilegi sudo
 # ==========================
-sudo useradd --create-home --shell /bin/bash ${SERVICE_USER}
-echo "${SERVICE_USER} ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/010_${SERVICE_USER}-nopasswd >/dev/null
+if ! id -u "${SERVICE_USER}" >/dev/null 2>&1; then
+  sudo useradd --create-home --shell /bin/bash "${SERVICE_USER}"
+  echo "${SERVICE_USER} ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/010_${SERVICE_USER}-nopasswd >/dev/null
+fi
 SERVICE_USER_HOME=$(getent passwd ${SERVICE_USER} | cut -d: -f6)
 
 # ==========================
@@ -128,6 +130,7 @@ fi
 GIT_BRANCH="\${GIT_BRANCH:-\$DEFAULT_GIT_BRANCH}"
 INVENTORY="\${INVENTORY:-}"
 PLAYBOOK="\${PLAYBOOK:-\$DEFAULT_PLAYBOOK}"
+RUN_LOCAL=\${RUN_LOCAL:-false}
 
 # Configura il comando SSH usato da git: chiave dedicata, niente agent forwarding, accetta nuove chiavi host
 export GIT_SSH_COMMAND="ssh -i \${GIT_SSH_KEY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
@@ -136,7 +139,6 @@ export GIT_SSH_COMMAND="ssh -i \${GIT_SSH_KEY} -o IdentitiesOnly=yes -o StrictHo
 export ANSIBLE_FORCE_COLOR=1
 export ANSIBLE_NOCOWS=1
 export ANSIBLE_COW_SELECTION=tux
-
 
 (
   set -euo pipefail   # fallisci su errore/variabile non definita e pipe
@@ -172,8 +174,8 @@ export ANSIBLE_COW_SELECTION=tux
   fi
   cd "\${REPO_DIR}" >/dev/null
   # Controlli di esistenza per inventory e playbook (percorsi relativi al repo)
-  if [[ -n "\${INVENTORY:-}" ]] && [[ ! -f "\$INVENTORY" ]]; then
-    log "inventory not found: \$INVENTORY" >&2;
+  if [[ -n "\${INVENTORY:-}" ]] && [[ "\$INVENTORY" != *,* ]] && [[ ! -f "\$INVENTORY" ]]; then
+    log "inventory not found: \$INVENTORY" >&2
     exit 1
   fi
   if [[ ! -f "\$PLAYBOOK" ]]; then
@@ -191,6 +193,9 @@ export ANSIBLE_COW_SELECTION=tux
     ARGS=( --vault-password-file "\$GITOPS_CONFIG_DIR/\$GITOPS_CONFIG_VAULT_KEY_FILENAME" )
     if [[ -n "\${INVENTORY:-}" ]]; then
       ARGS+=( -i "\$INVENTORY" )
+    fi
+    if [[ "\$RUN_LOCAL" == true ]]; then
+      ARGS+=( -c local )
     fi
     ARGS+=( "\$PLAYBOOK" )
     log "ansible-playbook running ..."
@@ -333,6 +338,15 @@ read -r -p "Inventory path [${DEFAULT_INVENTORY}]: " INVENTORY
 INVENTORY="${INVENTORY:-$DEFAULT_INVENTORY}"
 read -r -p "Playbook path [${DEFAULT_PLAYBOOK}]: " PLAYBOOK
 PLAYBOOK="${PLAYBOOK:-$DEFAULT_PLAYBOOK}"
+read -r -p "Run playbook only in local mode (y/N)? " RUN_LOCAL_ANSWER
+case "${RUN_LOCAL_ANSWER:-N}" in
+  [yY]|[yY][eE][sS])
+    RUN_LOCAL=true
+    ;;
+  *)
+    RUN_LOCAL=false
+    ;;
+esac
 
 # Trasforma l'URL SSH in uno HTTP (solo per mostrare le istruzioni su dove aggiungere la deploy key)
 GIT_URL_HTTP=$(echo "$GIT_URL" | sed -E 's#:#/#')
@@ -366,6 +380,9 @@ PLAYBOOK="${PLAYBOOK}"
 EOF
   if [[ -n "${INVENTORY:-}" ]]; then
     echo "INVENTORY=\"${INVENTORY}\"" | sudo -u ${SERVICE_USER} tee -a "${GITOPS_CONFIG_FILE}" >/dev/null
+  fi
+  if [[ "$RUN_LOCAL" == true ]]; then
+    echo "RUN_LOCAL=true" | sudo -u ${SERVICE_USER} tee -a "${GITOPS_CONFIG_FILE}" >/dev/null
   fi
 fi
 
