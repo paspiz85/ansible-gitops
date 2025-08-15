@@ -195,7 +195,7 @@ export ANSIBLE_COW_SELECTION=tux
       ARGS+=( -i "\$INVENTORY" )
     fi
     if [[ "\$RUN_LOCAL" == true ]]; then
-      ARGS+=( -c local )
+      ARGS+=( --connection=local )
     fi
     ARGS+=( "\$PLAYBOOK" )
     log "ansible-playbook running ..."
