@@ -1,1 +1,102 @@
 # ansible-gitops
+
+> Script di installazione del software di base per progetti GitOps.
+
+---
+
+### 📦 Installazione
+
+Lanciare la procedura guidata con:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/paspiz85/ansible-gitops/main/install.sh)
+```
+
+---
+
+### ⚙️ Configurazione notifiche
+
+Per configurare le notifiche modificare il file ```/etc/ansible-gitops/notifications.yml```
+
+---
+
+### ▶️ Esecuzione manuale
+
+Per eseguire l'aggiornamento degli ambienti configurati:
+
+```bash
+sudo systemctl start ansible-gitops.service
+```
+
+Se è necessario forzare l'esecuzione si può eliminare il repository locale, con:
+
+```bash
+sudo rm -rf /var/lib/ansible-gitops/test-infra
+```
+
+---
+
+### 🔑 Gestione dei segreti con Ansible Vault (Editor)
+
+Per prima cosa installare ```ansible-vault-editor```
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/paspiz85/ansible-gitops/main/ansible-vault-editor/install.sh)
+```
+
+Scaricare la chiave di un host con:
+
+```bash
+ssh pi@peppe.local "sudo cat /etc/ansible-gitops/ansible-vault.key" | ansible-vault-editor -c peppe
+```
+
+Per creare/modificare un file di secret:
+
+```bash
+export EDITOR="subl -w"
+ansible-vault-editor peppe inventory/prod/secrets/peppe.yml
+```
+
+---
+
+### 👤 Configurazione utente ansible su altre macchine
+
+Accedere alla macchina remota con un utente con privilegi amministrativi e creare l'utente con:
+
+```bash
+sudo useradd --create-home --shell /bin/bash ansible
+echo "ansible ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/010_ansible-nopasswd
+sudo -u ansible install -d -m 700 ~ansible/.ssh
+sudo -u ansible install -D -m 600 ~ansible/.ssh/authorized_keys
+sudo -u ansible cat ~ansible/.ssh/id_ed25519_ansible_gitops.pub >> ~ansible/.ssh/authorized_keys
+```
+
+---
+
+### 🧪 Ambiente di test
+
+Installare [Vagrant](https://developer.hashicorp.com/vagrant) e [VirtualBox](https://www.virtualbox.org/),
+poi dalla cartella di questo progetto avviare la macchina virtuale ed accedere con la password ```vagrant```:
+
+```bash
+vagrant up
+ssh -p 2222 vagrant@localhost
+bash <(curl -fsSL https://raw.githubusercontent.com/paspiz85/ansible-gitops/main/install.sh) \
+ -u git@github.com:paspiz85/ansible-gitops.git
+sudo systemctl start ansible-gitops.service
+cat /var/log/ansible-gitops/ansible-gitops.log
+```
+
+Per spegnere e distruggere la macchina virtuale
+
+```bash
+vagrant halt
+vagrant destroy
+```
+
+---
+
+### 🔗 Link Utili
+
+- https://www.techsyncer.com/it/what-is-ansible.html
+- https://learnansible.dev/article/Getting_Started_with_Ansible_A_Beginners_Guide.html
