@@ -36,6 +36,22 @@ sudo rm -rf /var/lib/ansible-gitops/test-infra
 
 ---
 
+### 🕓 Esecuzione temporizzata
+
+Per attivare l'esecuzione automatica:
+
+```bash
+sudo systemctl enable --now ansible-gitops.timer
+```
+
+Per disattivare l'esecuzione automatica:
+
+```bash
+sudo systemctl disable ansible-gitops.timer
+```
+
+---
+
 ### 👤 Configurazione utente ansible su altre macchine
 
 Accedere alla macchina remota con un utente con privilegi amministrativi e creare l'utente con:

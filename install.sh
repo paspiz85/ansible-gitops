@@ -3,6 +3,7 @@
 # ==========================
 # Configurazioni di default (modifica se vuoi)
 # ==========================
+DEFAULT_TIMER_ACTIVATION="5m"                                          # intervallo di attivazione del timer
 DEFAULT_GIT_SSH_KEY_NAME="id_ed25519_ansible_gitops"                   # nome file della chiave SSH che userà git (in ~ansible/.ssh)
 DEFAULT_GIT_URL=""                                                     # URL SSH del repo (es: git@github.com:org/repo.git)
 DEFAULT_GIT_BRANCH="main"                                              # branch predefinito da seguire
@@ -25,8 +26,9 @@ SILENT=false
 # ==========================
 # Parse opzioni CLI
 # ==========================
-while getopts "u:b:i:p:s" opt; do
+while getopts "t:u:b:i:p:s" opt; do
   case $opt in
+    t) DEFAULT_TIMER_ACTIVATION="$OPTARG" ;;
     u) DEFAULT_GIT_URL="$OPTARG" ;;
     b) DEFAULT_GIT_BRANCH="$OPTARG" ;;
     i) DEFAULT_INVENTORY="$OPTARG" ;;
@@ -293,8 +295,35 @@ StandardError=journal
 [Install]
 WantedBy=multi-user.target
 EOF
-
 sudo systemctl daemon-reload
+
+# ==========================
+# Timer systemd
+# ==========================
+if [[ ! -f "${TIMER_PATH}" ]]; then
+  if [[ "$SILENT" == true ]]; then
+    TIMER_ACTIVATION="${DEFAULT_TIMER_ACTIVATION}"
+  else
+    echo
+    read -r -p "How often to run the service [${DEFAULT_TIMER_ACTIVATION}]: " TIMER_ACTIVATION
+    TIMER_ACTIVATION="${TIMER_ACTIVATION:-$DEFAULT_TIMER_ACTIVATION}"
+  fi
+
+  sudo tee "$TIMER_PATH" >/dev/null <<EOF
+[Unit]
+Description=Run ${SERVICE_NAME} periodically
+
+[Timer]
+OnBootSec=2m
+OnUnitActiveSec=${TIMER_ACTIVATION}
+RandomizedDelaySec=60
+Unit=${SERVICE_NAME}.service
+
+[Install]
+WantedBy=timers.target
+EOF
+  sudo systemctl daemon-reload
+fi
 
 if [[ "$SILENT" == true && -z "$DEFAULT_GIT_URL" ]]; then
   exit 0
@@ -387,36 +416,6 @@ EOF
 fi
 
 # ==========================
-# Timer (opzionale)
-# ==========================
-echo
-while true; do
-  read -r -p "How often to run the service (in minutes)? (leave blank to NOT create the timer): " MINUTES
-  if [[ -z "${MINUTES}" ]]; then
-    MINUTES=
-    break
-  fi
-  if [[ "${MINUTES}" =~ ^[0-9]+$ ]] && [[ "${MINUTES}" -gt 0 ]]; then
-    sudo tee "$TIMER_PATH" >/dev/null <<EOF
-[Unit]
-Description=Run ${SERVICE_NAME} periodically
-
-[Timer]
-OnBootSec=2m
-OnUnitActiveSec=${MINUTES}m
-RandomizedDelaySec=60
-Unit=${SERVICE_NAME}.service
-
-[Install]
-WantedBy=timers.target
-EOF
-    sudo systemctl daemon-reload
-    break
-  fi
-  echo "Enter an integer > 0, or leave blank to skip."
-done
-
-# ==========================
 # Istruzioni finali
 # ==========================
 cat <<EOF
@@ -438,11 +437,7 @@ If needed customize notifications/logrotate:
 Test the service manually:
   sudo systemctl start ${SERVICE_NAME}.service
 
-EOF
-if [[ -f "$TIMER_PATH" ]]; then
-cat <<EOF
 If everything is OK, you can enable the timer:
   sudo systemctl enable --now ${TIMER_NAME}.timer
 
 EOF
-fi
