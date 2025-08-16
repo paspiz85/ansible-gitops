@@ -355,7 +355,7 @@ else
   read -r -p "Git SSH key [${DEFAULT_GIT_SSH_KEY}]: " GIT_SSH_KEY
   GIT_SSH_KEY="${GIT_SSH_KEY:-$DEFAULT_GIT_SSH_KEY}"
 fi
-if [[ "$SILENT" != true || ! -f "$GIT_SSH_KEY" ]]; then
+if [[ "$SILENT" != true || ! $(sudo -u "$SERVICE_USER" test -f "$GIT_SSH_KEY"; echo $?) -eq 0 ]]; then
   sudo -u "$SERVICE_USER" ssh-keygen -f "$GIT_SSH_KEY" \
     -t ed25519 -C "${SERVICE_NAME}@$(hostname)" -N ''
 fi
