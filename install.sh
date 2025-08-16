@@ -344,8 +344,12 @@ validate_git_ssh_url() {
 # ==========================
 echo
 DEFAULT_GIT_SSH_KEY="${SERVICE_USER_HOME}/.ssh/${DEFAULT_GIT_SSH_KEY_NAME}"
-read -r -p "Git SSH key [${DEFAULT_GIT_SSH_KEY}]: " GIT_SSH_KEY
-GIT_SSH_KEY="${GIT_SSH_KEY:-$DEFAULT_GIT_SSH_KEY}"
+if [[ "$SILENT" == true ]]; then
+  GIT_SSH_KEY="${DEFAULT_GIT_SSH_KEY}"
+else
+  read -r -p "Git SSH key [${DEFAULT_GIT_SSH_KEY}]: " GIT_SSH_KEY
+  GIT_SSH_KEY="${GIT_SSH_KEY:-$DEFAULT_GIT_SSH_KEY}"
+fi
 sudo -u ${SERVICE_USER} install -d -m 700 ${SERVICE_USER_HOME}/.ssh
 if [[ "$SILENT" != true || ! -f "$GIT_SSH_KEY" ]]; then
   sudo -u "$SERVICE_USER" ssh-keygen -f "$GIT_SSH_KEY" \
