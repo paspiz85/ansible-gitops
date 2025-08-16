@@ -345,8 +345,10 @@ DEFAULT_GIT_SSH_KEY="${SERVICE_USER_HOME}/.ssh/${DEFAULT_GIT_SSH_KEY_NAME}"
 read -r -p "Git SSH key [${DEFAULT_GIT_SSH_KEY}]: " GIT_SSH_KEY
 GIT_SSH_KEY="${GIT_SSH_KEY:-$DEFAULT_GIT_SSH_KEY}"
 sudo -u ${SERVICE_USER} install -d -m 700 ${SERVICE_USER_HOME}/.ssh
-sudo -u ${SERVICE_USER} ssh-keygen -f "${GIT_SSH_KEY}" \
- -t ed25519 -C "${SERVICE_NAME}@$(hostname)" -N ''
+if [[ "$SILENT" != true || ! -f "$GIT_SSH_KEY" ]]; then
+  sudo -u "$SERVICE_USER" ssh-keygen -f "$GIT_SSH_KEY" \
+    -t ed25519 -C "${SERVICE_NAME}@$(hostname)" -N ''
+fi
 
 # ==========================
 # Configurazione interattiva
