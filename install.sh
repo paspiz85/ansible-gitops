@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PROJECT_VERSION="1.0.0"
+
 # ==========================
 # Configurazioni di default (modifica se vuoi)
 # ==========================
@@ -79,6 +81,8 @@ fi
 sudo chmod 600 "${GITOPS_CONFIG_DIR}/${GITOPS_CONFIG_VAULT_KEY_FILENAME}"
 sudo tee "${GITOPS_CONFIG_RUNNER}" >/dev/null <<EOF
 #!/bin/bash
+
+PROJECT_VERSION="${PROJECT_VERSION}"
 
 DEFAULT_GIT_SSH_KEY="${SERVICE_USER_HOME}/.ssh/${DEFAULT_GIT_SSH_KEY_NAME}"
 DEFAULT_GIT_BRANCH="${DEFAULT_GIT_BRANCH}"
@@ -342,15 +346,15 @@ validate_git_ssh_url() {
 # ==========================
 # Chiave SSH (senza passphrase)
 # ==========================
-echo
+sudo -u ${SERVICE_USER} install -d -m 700 ${SERVICE_USER_HOME}/.ssh
 DEFAULT_GIT_SSH_KEY="${SERVICE_USER_HOME}/.ssh/${DEFAULT_GIT_SSH_KEY_NAME}"
 if [[ "$SILENT" == true ]]; then
   GIT_SSH_KEY="${DEFAULT_GIT_SSH_KEY}"
 else
+  echo
   read -r -p "Git SSH key [${DEFAULT_GIT_SSH_KEY}]: " GIT_SSH_KEY
   GIT_SSH_KEY="${GIT_SSH_KEY:-$DEFAULT_GIT_SSH_KEY}"
 fi
-sudo -u ${SERVICE_USER} install -d -m 700 ${SERVICE_USER_HOME}/.ssh
 if [[ "$SILENT" != true || ! -f "$GIT_SSH_KEY" ]]; then
   sudo -u "$SERVICE_USER" ssh-keygen -f "$GIT_SSH_KEY" \
     -t ed25519 -C "${SERVICE_NAME}@$(hostname)" -N ''
