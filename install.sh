@@ -372,8 +372,14 @@ INVENTORY="${INVENTORY:-$DEFAULT_INVENTORY}"
 read -r -p "Playbook path [${DEFAULT_PLAYBOOK}]: " PLAYBOOK
 PLAYBOOK="${PLAYBOOK:-$DEFAULT_PLAYBOOK}"
 RUN_LOCAL=$DEFAULT_RUN_LOCAL
-read -r -p "Run playbook only in local mode (y/N)? " RUN_LOCAL_ANSWER
-case "${RUN_LOCAL_ANSWER:-N}" in
+if [[ "$DEFAULT_RUN_LOCAL" == true ]]; then
+  DEFAULT_RUN_LOCAL_ANSWER=Y
+  read -r -p "Run playbook only in local mode (Y/n)? " RUN_LOCAL_ANSWER
+else
+  DEFAULT_RUN_LOCAL_ANSWER=N
+  read -r -p "Run playbook only in local mode (y/N)? " RUN_LOCAL_ANSWER
+fi
+case "${RUN_LOCAL_ANSWER:-$DEFAULT_RUN_LOCAL_ANSWER}" in
   [yY]|[yY][eE][sS])
     RUN_LOCAL=true
     ;;
