@@ -410,8 +410,12 @@ GIT_URL_HTTP="${GIT_URL_HTTP%.git}"
 
 # Nome di default per la config ricavato dal nome repo (usato per REPO_DIR e per i log)
 DEFAULT_GITOPS_NAME="$(basename $GIT_URL_HTTP)"
-read -r -p "GitOps config name [${DEFAULT_GITOPS_NAME}]: " GITOPS_CONFIG_NAME
-GITOPS_CONFIG_NAME="${GITOPS_CONFIG_NAME:-$DEFAULT_GITOPS_NAME}"
+if [[ "$SILENT" == true ]]; then
+  GITOPS_CONFIG_NAME="${DEFAULT_GITOPS_NAME}"
+else
+  read -r -p "GitOps config name [${DEFAULT_GITOPS_NAME}]: " GITOPS_CONFIG_NAME
+  GITOPS_CONFIG_NAME="${GITOPS_CONFIG_NAME:-$DEFAULT_GITOPS_NAME}"
+fi
 GITOPS_CONFIG_FILE="${GITOPS_CONFIG_DIR}/${GITOPS_CONFIG_NAME}.env"
 
 GITOPS_CONFIG_SAVE=true
