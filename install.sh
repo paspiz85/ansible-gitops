@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJECT_VERSION="1.0.0"
+PROJECT_VERSION="1.0.1"
 
 # ==========================
 # Configurazioni di default (modifica se vuoi)
