@@ -355,7 +355,7 @@ fi
 # ==========================
 # Configurazione interattiva
 # ==========================
-if [[ "$ILENT" == true ]]; then
+if [[ "$SILENT" == true ]]; then
   GIT_URL="${DEFAULT_GIT_URL}"
   if ! validate_git_ssh_url "$GIT_URL"; then
     echo "Invalid '$GIT_URL' format. Must be like: git@host:user/repo.git"
