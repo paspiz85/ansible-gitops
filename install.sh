@@ -9,6 +9,7 @@ DEFAULT_GIT_URL=""                                                     # URL SSH
 DEFAULT_GIT_BRANCH="main"                                              # branch predefinito da seguire
 DEFAULT_INVENTORY=""                                                   # percorso inventory Ansible di default (relativo al repo)
 DEFAULT_PLAYBOOK="playbooks/site.yml"                                  # percorso playbook Ansible di default (relativo al repo)
+DEFAULT_RUN_LOCAL=false
 
 SERVICE_NAME="ansible-gitops"                                          # nome del servizio/systemd unit
 SERVICE_USER="ansible"                                                 # utente di sistema dedicato che esegue il servizio
