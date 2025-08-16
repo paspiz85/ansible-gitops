@@ -355,38 +355,49 @@ fi
 # ==========================
 # Configurazione interattiva
 # ==========================
-echo
-while true; do
-  read -r -p "Git URL [${DEFAULT_GIT_URL}]: " GIT_URL
-  GIT_URL="${GIT_URL:-$DEFAULT_GIT_URL}"
+if [[ "$ILENT" == true ]]; then
+  GIT_URL="${DEFAULT_GIT_URL}"
   if ! validate_git_ssh_url "$GIT_URL"; then
-    echo "Invalid format. Must be like: git@host:user/repo.git"
-  else
-    break
+    echo "Invalid '$GIT_URL' format. Must be like: git@host:user/repo.git"
+    exit 1
   fi
-done
-read -r -p "Git branch [${DEFAULT_GIT_BRANCH}]: " GIT_BRANCH
-GIT_BRANCH="${GIT_BRANCH:-$DEFAULT_GIT_BRANCH}"
-read -r -p "Inventory path [${DEFAULT_INVENTORY}]: " INVENTORY
-INVENTORY="${INVENTORY:-$DEFAULT_INVENTORY}"
-read -r -p "Playbook path [${DEFAULT_PLAYBOOK}]: " PLAYBOOK
-PLAYBOOK="${PLAYBOOK:-$DEFAULT_PLAYBOOK}"
-RUN_LOCAL=$DEFAULT_RUN_LOCAL
-if [[ "$DEFAULT_RUN_LOCAL" == true ]]; then
-  DEFAULT_RUN_LOCAL_ANSWER=Y
-  read -r -p "Run playbook only in local mode (Y/n)? " RUN_LOCAL_ANSWER
+  GIT_BRANCH="${DEFAULT_GIT_BRANCH}"
+  INVENTORY="${DEFAULT_INVENTORY}"
+  PLAYBOOK="${DEFAULT_PLAYBOOK}"
+  RUN_LOCAL=$DEFAULT_RUN_LOCAL
 else
-  DEFAULT_RUN_LOCAL_ANSWER=N
-  read -r -p "Run playbook only in local mode (y/N)? " RUN_LOCAL_ANSWER
+  echo
+  while true; do
+    read -r -p "Git URL [${DEFAULT_GIT_URL}]: " GIT_URL
+    GIT_URL="${GIT_URL:-$DEFAULT_GIT_URL}"
+    if ! validate_git_ssh_url "$GIT_URL"; then
+      echo "Invalid '$GIT_URL' format. Must be like: git@host:user/repo.git"
+    else
+      break
+    fi
+  done
+  read -r -p "Git branch [${DEFAULT_GIT_BRANCH}]: " GIT_BRANCH
+  GIT_BRANCH="${GIT_BRANCH:-$DEFAULT_GIT_BRANCH}"
+  read -r -p "Inventory path [${DEFAULT_INVENTORY}]: " INVENTORY
+  INVENTORY="${INVENTORY:-$DEFAULT_INVENTORY}"
+  read -r -p "Playbook path [${DEFAULT_PLAYBOOK}]: " PLAYBOOK
+  PLAYBOOK="${PLAYBOOK:-$DEFAULT_PLAYBOOK}"
+  if [[ "$DEFAULT_RUN_LOCAL" == true ]]; then
+    DEFAULT_RUN_LOCAL_ANSWER=Y
+    read -r -p "Run playbook only in local mode (Y/n)? " RUN_LOCAL_ANSWER
+  else
+    DEFAULT_RUN_LOCAL_ANSWER=N
+    read -r -p "Run playbook only in local mode (y/N)? " RUN_LOCAL_ANSWER
+  fi
+  case "${RUN_LOCAL_ANSWER:-$DEFAULT_RUN_LOCAL_ANSWER}" in
+    [yY]|[yY][eE][sS])
+      RUN_LOCAL=true
+      ;;
+    *)
+      RUN_LOCAL=false
+      ;;
+  esac
 fi
-case "${RUN_LOCAL_ANSWER:-$DEFAULT_RUN_LOCAL_ANSWER}" in
-  [yY]|[yY][eE][sS])
-    RUN_LOCAL=true
-    ;;
-  *)
-    RUN_LOCAL=false
-    ;;
-esac
 
 # Trasforma l'URL SSH in uno HTTP (solo per mostrare le istruzioni su dove aggiungere la deploy key)
 GIT_URL_HTTP=$(echo "$GIT_URL" | sed -E 's#:#/#')
