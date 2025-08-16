@@ -73,7 +73,9 @@ poi dalla cartella di questo progetto avviare la macchina virtuale ed accedere c
 
 ```bash
 vagrant up
-ssh -p 2222 vagrant@localhost
+ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null vagrant@localhost
+sudo apt update
+sudo apt install -y curl
 bash <(curl -fsSL https://raw.githubusercontent.com/paspiz85/ansible-gitops/main/install.sh) \
  -u git@github.com:paspiz85/ansible-gitops.git
 sudo systemctl start ansible-gitops.service
