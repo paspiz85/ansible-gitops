@@ -75,7 +75,7 @@ poi dalla cartella di questo progetto avviare la macchina virtuale ed accedere c
 vagrant up
 ssh -p 2222 vagrant@localhost
 bash <(curl -fsSL https://raw.githubusercontent.com/paspiz85/ansible-gitops/main/install.sh) \
- -u git@github.com:paspiz85/ansible-gitops.git
+ -l -u git@github.com:paspiz85/ansible-gitops.git
 sudo systemctl start ansible-gitops.service
 cat /var/log/ansible-gitops/ansible-gitops.log
 ```
