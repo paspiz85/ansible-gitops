@@ -46,14 +46,14 @@ done
 # ==========================
 if command -v apt >/dev/null 2>&1; then
   sudo apt update
-  sudo apt install -y git ansible apprise
+  sudo apt install -y git ansible logrotate apprise
 elif command -v dnf >/dev/null 2>&1; then
   sudo dnf install -y epel-release
-  sudo dnf install -y git ansible
+  sudo dnf install -y git ansible logrotate
 elif command -v yum >/dev/null 2>&1; then
-  sudo yum install -y git ansible
+  sudo yum install -y git ansible logrotate
 elif command -v zypper >/dev/null 2>&1; then
-  sudo zypper install -y git ansible
+  sudo zypper install -y git ansible logrotate
 else
   echo "Unsupported package manager. Install git/ansible manually." >&2
 fi
