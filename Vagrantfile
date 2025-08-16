@@ -7,6 +7,7 @@ Vagrant.configure("2") do |config|
   end
   config.ssh.username = "vagrant"
   config.vm.provision "shell", inline: <<-SHELL
+    sudo timedatectl set-timezone Europe/Rome
     sudo sed -i 's/^#PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
     sudo sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
     sudo systemctl restart sshd
