@@ -390,12 +390,8 @@ else
     read -r -p "Run playbook only in local mode (y/N)? " RUN_LOCAL_ANSWER
   fi
   case "${RUN_LOCAL_ANSWER:-$DEFAULT_RUN_LOCAL_ANSWER}" in
-    [yY]|[yY][eE][sS])
-      RUN_LOCAL=true
-      ;;
-    *)
-      RUN_LOCAL=false
-      ;;
+    [yY]|[yY][eE][sS])bRUN_LOCAL=true ;;
+    *) RUN_LOCAL=false ;;
   esac
 fi
 
@@ -411,14 +407,20 @@ GITOPS_CONFIG_NAME="${GITOPS_CONFIG_NAME:-$DEFAULT_GITOPS_NAME}"
 GITOPS_CONFIG_FILE="${GITOPS_CONFIG_DIR}/${GITOPS_CONFIG_NAME}.env"
 
 GITOPS_CONFIG_SAVE=true
-# Se il file .env esiste già, chiedi se sovrascriverlo
-if [[ -f "${GITOPS_CONFIG_FILE}" ]]; then
-  echo "${GITOPS_CONFIG_FILE} already exists."
-  read -r -p "Overwrite (y/N)? " GITOPS_OVERWRITE_ANSWER
-  case "${GITOPS_OVERWRITE_ANSWER:-N}" in
-    [yY]|[yY][eE][sS]) ;;
-    *) GITOPS_CONFIG_SAVE=false ;;
-  esac
+if [[ "$ILENT" == true ]]; then
+  if [[ -f "${GITOPS_CONFIG_FILE}" ]]; then
+    GITOPS_CONFIG_SAVE=false
+  fi
+else
+  # Se il file .env esiste già, chiedi se sovrascriverlo
+  if [[ -f "${GITOPS_CONFIG_FILE}" ]]; then
+    echo "${GITOPS_CONFIG_FILE} already exists."
+    read -r -p "Overwrite (y/N)? " GITOPS_OVERWRITE_ANSWER
+    case "${GITOPS_OVERWRITE_ANSWER:-N}" in
+      [yY]|[yY][eE][sS]) ;;
+      *) GITOPS_CONFIG_SAVE=false ;;
+    esac
+  fi
 fi
 # Scrive il file .env con i parametri minimi; puoi aggiungere altre variabili (es. REPO_DIR personalizzato)
 if [[ "$GITOPS_CONFIG_SAVE" == true ]]; then
