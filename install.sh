@@ -411,7 +411,7 @@ GITOPS_CONFIG_NAME="${GITOPS_CONFIG_NAME:-$DEFAULT_GITOPS_NAME}"
 GITOPS_CONFIG_FILE="${GITOPS_CONFIG_DIR}/${GITOPS_CONFIG_NAME}.env"
 
 GITOPS_CONFIG_SAVE=true
-if [[ "$ILENT" == true ]]; then
+if [[ "$SILENT" == true ]]; then
   if [[ -f "${GITOPS_CONFIG_FILE}" ]]; then
     GITOPS_CONFIG_SAVE=false
   fi
