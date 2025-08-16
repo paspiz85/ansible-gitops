@@ -27,13 +27,14 @@ SILENT=false
 # ==========================
 # Parse opzioni CLI
 # ==========================
-while getopts "t:u:b:i:p:s" opt; do
+while getopts "t:u:b:i:p:ls" opt; do
   case $opt in
     t) DEFAULT_TIMER_ACTIVATION="$OPTARG" ;;
     u) DEFAULT_GIT_URL="$OPTARG" ;;
     b) DEFAULT_GIT_BRANCH="$OPTARG" ;;
     i) DEFAULT_INVENTORY="$OPTARG" ;;
     p) DEFAULT_PLAYBOOK="$OPTARG" ;;
+    l) DEFAULT_RUN_LOCAL=true ;;
     s) SILENT=true ;;
   esac
 done
@@ -370,6 +371,7 @@ read -r -p "Inventory path [${DEFAULT_INVENTORY}]: " INVENTORY
 INVENTORY="${INVENTORY:-$DEFAULT_INVENTORY}"
 read -r -p "Playbook path [${DEFAULT_PLAYBOOK}]: " PLAYBOOK
 PLAYBOOK="${PLAYBOOK:-$DEFAULT_PLAYBOOK}"
+RUN_LOCAL=$DEFAULT_RUN_LOCAL
 read -r -p "Run playbook only in local mode (y/N)? " RUN_LOCAL_ANSWER
 case "${RUN_LOCAL_ANSWER:-N}" in
   [yY]|[yY][eE][sS])
