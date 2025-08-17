@@ -9,16 +9,6 @@ GITOPS_DATA_DIR="/var/lib/${SERVICE_NAME}"                             # dati/ch
 GITOPS_LOG_DIR="/var/log/${SERVICE_NAME}"                              # directory dove salvare i log
 GITOPS_CONFIG_DIR="/etc/${SERVICE_NAME}"                               # directory di configurazione (.env, runner, notifiche)
 
-# --- Opzioni ---
-DRY_RUN=false
-while true; do
-  case "$1" in
-    --dry-run) DRY_RUN=true; shift ;;
-    --) shift; break ;;
-    *)  break ;;
-  esac
-done
-
 # --- Backup ---
 BACKUP_DIR="${SERVICE_NAME}-$(date +%Y%m%d%H%M%S)-bak"
 mkdir -p "${BACKUP_DIR}"
@@ -29,10 +19,13 @@ if [[ -d "$SERVICE_USER_HOME" ]]; then
   sudo cp -a "$GITOPS_CONFIG_DIR" "${BACKUP_DIR}/home"
 fi
 
-# --- Controllo --dry-run ---
-if $DRY_RUN; then
-  exit 0
-fi
+# --- Controllo ---
+ls -R "${BACKUP_DIR}"
+read -r -p "Procedo alla rimozione? [y/N] " ANSWER
+case "${ANSWER:-N}" in
+  [yY]|[yY][eE][sS]) ;;
+  *) exit 0 ;;
+esac
 
 # --- Eliminazione ---
 sudo rm -rf "${TIMER_PATH}"
