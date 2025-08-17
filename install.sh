@@ -62,7 +62,7 @@ fi
 # Utente di servizio con home e privilegi sudo
 # ==========================
 if ! id -u "${SERVICE_USER}" >/dev/null 2>&1; then
-  sudo useradd --create-home --shell /bin/bash "${SERVICE_USER}"
+  sudo useradd --system --create-home --shell /bin/bash "${SERVICE_USER}"
   echo "${SERVICE_USER} ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/010_${SERVICE_USER}-nopasswd >/dev/null
 fi
 SERVICE_USER_HOME=$(getent passwd ${SERVICE_USER} | cut -d: -f6)

@@ -91,6 +91,16 @@ vagrant destroy
 
 ---
 
+### 📦 Disinstallazione
+
+Lanciare la procedura guidata con:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/paspiz85/ansible-gitops/main/uninstall.sh)
+```
+
+---
+
 ### 🔗 Link Utili
 
 - https://www.techsyncer.com/it/what-is-ansible.html
