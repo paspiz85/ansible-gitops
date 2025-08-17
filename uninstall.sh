@@ -9,6 +9,37 @@ GITOPS_DATA_DIR="/var/lib/${SERVICE_NAME}"                             # dati/ch
 GITOPS_LOG_DIR="/var/log/${SERVICE_NAME}"                              # directory dove salvare i log
 GITOPS_CONFIG_DIR="/etc/${SERVICE_NAME}"                               # directory di configurazione (.env, runner, notifiche)
 
+# --- Opzioni ---
+DRY_RUN=false
+while getopts "-:" opt; do
+  case "$opt" in
+    -)
+      case "$OPTARG" in
+        dry-run) DRY_RUN=true ;;
+        *) echo "Opzione sconosciuta: --$OPTARG" >&2; exit 1 ;;
+      esac
+      ;;
+    \?) echo "Opzione non valida: -$OPTARG" >&2; exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+# --- Backup ---
+BACKUP_DIR="${SERVICE_NAME}-$(date +%Y%m%d%H%M%S)-bak"
+mkdir -p "${BACKUP_DIR}"
+if [[ -d "$GITOPS_CONFIG_DIR" ]]; then
+  sudo cp -a "$GITOPS_CONFIG_DIR" "${BACKUP_DIR}/conf"
+fi
+if [[ -d "$SERVICE_USER_HOME" ]]; then
+  sudo cp -a "$GITOPS_CONFIG_DIR" "${BACKUP_DIR}/home"
+fi
+
+# --- Controllo --dry-run ---
+if $DRY_RUN; then
+  exit 0
+fi
+
+# --- Eliminazione ---
 sudo rm -rf "${TIMER_PATH}"
 sudo systemctl daemon-reload
 sudo rm -rf "${SERVICE_PATH}"
@@ -18,5 +49,5 @@ sudo rm -rf "${GITOPS_DATA_DIR}"
 sudo rm -rf "${GITOPS_LOG_DIR}"
 sudo rm -rf "${GITOPS_CONFIG_DIR}"
 SERVICE_USER_HOME=$(getent passwd ${SERVICE_USER} | cut -d: -f6)
-userdel -r "${SERVICE_USER}" 2>/dev/null || userdel "${SERVICE_USER}"
+sudo userdel -r "${SERVICE_USER}" 2>/dev/null || sudo userdel "${SERVICE_USER}"
 sudo rm -rf "${SERVICE_USER_HOME}"
