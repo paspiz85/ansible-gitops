@@ -11,18 +11,13 @@ GITOPS_CONFIG_DIR="/etc/${SERVICE_NAME}"                               # directo
 
 # --- Opzioni ---
 DRY_RUN=false
-while getopts "-:" opt; do
-  case "$opt" in
-    -)
-      case "$OPTARG" in
-        dry-run) DRY_RUN=true ;;
-        *) echo "Opzione sconosciuta: --$OPTARG" >&2; exit 1 ;;
-      esac
-      ;;
-    \?) echo "Opzione non valida: -$OPTARG" >&2; exit 1 ;;
+while true; do
+  case "$1" in
+    --dry-run) DRY_RUN=true; shift ;;
+    --) shift; break ;;
+    *)  break ;;
   esac
 done
-shift $((OPTIND - 1))
 
 # --- Backup ---
 BACKUP_DIR="${SERVICE_NAME}-$(date +%Y%m%d%H%M%S)-bak"
