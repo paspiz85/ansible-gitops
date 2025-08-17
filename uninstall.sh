@@ -9,18 +9,22 @@ GITOPS_DATA_DIR="/var/lib/${SERVICE_NAME}"                             # dati/ch
 GITOPS_LOG_DIR="/var/log/${SERVICE_NAME}"                              # directory dove salvare i log
 GITOPS_CONFIG_DIR="/etc/${SERVICE_NAME}"                               # directory di configurazione (.env, runner, notifiche)
 
+SERVICE_USER_HOME="$(getent passwd "$SERVICE_USER" | cut -d: -f6 || true)"
+
 # --- Backup ---
 BACKUP_DIR="${SERVICE_NAME}-$(date +%Y%m%d%H%M%S)-bak"
 mkdir -p "${BACKUP_DIR}"
 if [[ -d "$GITOPS_CONFIG_DIR" ]]; then
-  sudo cp -a "$GITOPS_CONFIG_DIR" "${BACKUP_DIR}/conf"
+  sudo cp -a "$GITOPS_CONFIG_DIR" "${BACKUP_DIR}/.etc"
 fi
-if [[ -d "$SERVICE_USER_HOME" ]]; then
-  sudo cp -a "$GITOPS_CONFIG_DIR" "${BACKUP_DIR}/home"
+if [[ -n "$SERVICE_USER_HOME" ]] && sudo test -d "$SERVICE_USER_HOME"; then
+  sudo cp -a "$SERVICE_USER_HOME/.ssh" "${BACKUP_DIR}/.ssh"
 fi
+sudo chown -R "$(id -un):$(id -gn)" "$BACKUP_DIR"
 
 # --- Controllo ---
-ls -R "${BACKUP_DIR}"
+echo "Ho fatto il seguente backup"
+ls -ahR "${BACKUP_DIR}"
 read -r -p "Procedo alla rimozione? [y/N] " ANSWER
 case "${ANSWER:-N}" in
   [yY]|[yY][eE][sS]) ;;
@@ -36,6 +40,8 @@ sudo rm -rf "/etc/logrotate.d/${SERVICE_NAME}"
 sudo rm -rf "${GITOPS_DATA_DIR}"
 sudo rm -rf "${GITOPS_LOG_DIR}"
 sudo rm -rf "${GITOPS_CONFIG_DIR}"
-SERVICE_USER_HOME=$(getent passwd ${SERVICE_USER} | cut -d: -f6)
 sudo userdel -r "${SERVICE_USER}" 2>/dev/null || sudo userdel "${SERVICE_USER}"
-sudo rm -rf "${SERVICE_USER_HOME}"
+if [[ -n "$SERVICE_USER_HOME" ]]; then
+  sudo rm -rf "${SERVICE_USER_HOME}"
+fi
+echo "Rimozione completata"
