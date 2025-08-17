@@ -398,7 +398,7 @@ else
     read -r -p "Run playbook only in local mode (y/N)? " RUN_LOCAL_ANSWER
   fi
   case "${RUN_LOCAL_ANSWER:-$DEFAULT_RUN_LOCAL_ANSWER}" in
-    [yY]|[yY][eE][sS])bRUN_LOCAL=true ;;
+    [yY]|[yY][eE][sS]) RUN_LOCAL=true ;;
     *) RUN_LOCAL=false ;;
   esac
 fi
