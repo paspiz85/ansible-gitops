@@ -287,6 +287,7 @@ sudo install -d -m 0755 "$(dirname "$SERVICE_PATH")"
 sudo tee "$SERVICE_PATH" >/dev/null <<EOF
 [Unit]
 Description=GitOps converge via ansible-playbook
+ConditionACPower=yes
 Wants=network-online.target
 After=network-online.target
 
