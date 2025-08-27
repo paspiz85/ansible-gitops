@@ -64,9 +64,6 @@ fi
 if ! id -u "${SERVICE_USER}" >/dev/null 2>&1; then
   sudo useradd --system --create-home --shell /bin/bash "${SERVICE_USER}"
   sudo tee /etc/sudoers.d/010_${SERVICE_USER}-nopasswd >/dev/null <<EOF
-Defaults !syslog
-Defaults logfile="/var/log/sudo.log"
-
 ${SERVICE_USER} ALL=(ALL) NOPASSWD: ALL
 EOF
 fi
