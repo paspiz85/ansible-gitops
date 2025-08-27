@@ -150,6 +150,7 @@ export ANSIBLE_FORCE_COLOR=1
 export ANSIBLE_NOCOWS=1
 export ANSIBLE_COW_SELECTION=tux
 
+LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
 (
   set -euo pipefail   # fallisci su errore/variabile non definita e pipe
 
@@ -196,7 +197,6 @@ export ANSIBLE_COW_SELECTION=tux
     # Log: crea un file per run con timestamp e un link simbolico "ultimo.log" per consultazione rapida
     RUN_ID="\$(date +%Y%m%d-%H%M%S)-\${GITOPS_CONFIG_NAME%.env}"
     LOG_FILE="\${GITOPS_LOG_DIR}/\${RUN_ID}.log"
-    LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
     touch "\$LOG_FILE"
     ln -sfn "\$LOG_FILE" "\$LOG_LINK"
 
@@ -227,7 +227,7 @@ if (( STATUS != 0 )); then
   elif [ "\$(grep -cE '^[[:space:]]*-\s' "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}")" -eq 0 ]; then
     log "error notification not sent: no config in \${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}"
   else
-    MSG_BODY=\$(<"\$LOG_FILE")
+    MSG_BODY=\$(<"\$LOG_LINK")
     if [ "\${#MSG_BODY}" -gt 1900 ]; then
       MSG_BODY="\${MSG_BODY:\$((\${#MSG_BODY}-1900))}"
     fi
