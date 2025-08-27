@@ -227,14 +227,10 @@ if (( STATUS != 0 )); then
   elif [ "\$(grep -cE '^[[:space:]]*-\s' "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}")" -eq 0 ]; then
     log "error notification not sent: no config in \${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}"
   else
-    MSG_BODY=\$(cat \$LOG_LINK)
+    MSG_BODY=\$(cat \$LOG_FILE)
     if (( \${#MSG_BODY} > 1900 )); then
       MSG_BODY="\${MSG_BODY: -1900}"
     fi
-    echo boh
-    echo "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}"
-    echo ciao
-    echo "⚠️ GitOps \${GITOPS_CONFIG_NAME} error on \$(hostname)"
     echo bis
     echo "\${MSG_BODY}"
     echo ccc
