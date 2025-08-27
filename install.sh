@@ -232,7 +232,7 @@ if (( STATUS != 0 )); then
       MSG_BODY="\${MSG_BODY:\$((\${#MSG_BODY}-1900))}"
     fi
     MSG_BODY="\${MSG_BODY:=see log for details}"
-    apprise --config "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}" -t "⚠️ GitOps \${GITOPS_CONFIG_NAME} error on \$(hostname)" -b "\${MSG_BODY:-see log for de}" || true
+    apprise --config "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}" -t "⚠️ GitOps \${GITOPS_CONFIG_NAME} error on \$(hostname)" -b "\${MSG_BODY}" || true
   fi
 fi
 EOF
