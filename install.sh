@@ -222,16 +222,23 @@ if (( STATUS != 0 )); then
   log "error"
   if ! command -v apprise >/dev/null 2>&1; then
     log "error notification not sent: missing apprise"
-  elif [[ ! -f "\${GITOPS_CONFIG_DIR}/\$GITOPS_CONFIG_NOTIFICATIONS_FILENAME" ]]; then
-    log "error notification not sent: missing \${GITOPS_CONFIG_DIR}/\$GITOPS_CONFIG_NOTIFICATIONS_FILENAME"
-  elif [ "\$(grep -cE '^[[:space:]]*-\s' "\${GITOPS_CONFIG_DIR}/\$GITOPS_CONFIG_NOTIFICATIONS_FILENAME")" -eq 0 ]; then
-    log "error notification not sent: no config in \${GITOPS_CONFIG_DIR}/\$GITOPS_CONFIG_NOTIFICATIONS_FILENAME"
+  elif [[ ! -f "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}" ]]; then
+    log "error notification not sent: missing \${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}"
+  elif [ "\$(grep -cE '^[[:space:]]*-\s' "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}")" -eq 0 ]; then
+    log "error notification not sent: no config in \${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}"
   else
     MSG_BODY=\$(cat \$LOG_LINK)
     if (( \${#MSG_BODY} > 1900 )); then
       MSG_BODY="\${MSG_BODY: -1900}"
     fi
-    apprise --config "\${GITOPS_CONFIG_DIR}/\$GITOPS_CONFIG_NOTIFICATIONS_FILENAME" -t "⚠️ GitOps \$GITOPS_CONFIG_NAME error on \$(hostname)" -b "\$MSG_BODY" || true
+    echo boh
+    echo "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}"
+    echo ciao
+    echo "⚠️ GitOps \${GITOPS_CONFIG_NAME} error on \$(hostname)"
+    echo bis
+    echo "\${MSG_BODY}"
+    echo ccc
+    apprise --config "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}" -t "⚠️ GitOps \${GITOPS_CONFIG_NAME} error on \$(hostname)" -b "\${MSG_BODY}" || true
   fi
 fi
 EOF
