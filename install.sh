@@ -296,8 +296,8 @@ Type=oneshot
 User=${SERVICE_USER}
 Group=${SERVICE_USER}
 ExecStart=/bin/bash -c 'find ${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sort | xargs -r -n1 ${GITOPS_CONFIG_RUNNER} -e'
-StandardOutput=journal
-StandardError=journal
+StandardOutput=append:/var/log/${SERVICE_NAME}/systemd.log 
+StandardError=inherit
 
 [Install]
 WantedBy=multi-user.target
