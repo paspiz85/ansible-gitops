@@ -63,7 +63,12 @@ fi
 # ==========================
 if ! id -u "${SERVICE_USER}" >/dev/null 2>&1; then
   sudo useradd --system --create-home --shell /bin/bash "${SERVICE_USER}"
-  echo "${SERVICE_USER} ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/010_${SERVICE_USER}-nopasswd >/dev/null
+  sudo tee /etc/sudoers.d/010_${SERVICE_USER}-nopasswd >/dev/null <<EOF
+Defaults !syslog
+Defaults logfile="/var/log/sudo.log"
+
+${SERVICE_USER} ALL=(ALL) NOPASSWD: ALL
+EOF
 fi
 SERVICE_USER_HOME=$(getent passwd ${SERVICE_USER} | cut -d: -f6)
 
@@ -296,8 +301,8 @@ Type=oneshot
 User=${SERVICE_USER}
 Group=${SERVICE_USER}
 ExecStart=/bin/bash -c 'find ${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sort | xargs -r -n1 ${GITOPS_CONFIG_RUNNER} -e'
-StandardOutput=append:/var/log/${SERVICE_NAME}/systemd.log 
-StandardError=inherit
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
