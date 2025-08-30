@@ -219,7 +219,7 @@ LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
 )
 STATUS=\$?
 # Se il run è fallito, prova a inviare una notifica tramite Apprise (se presente e configurato)
-if (( STATUS != 0 )); then
+if [ "\$STATUS" -ne 0 ]; then
   log "error"
   if ! command -v apprise >/dev/null 2>&1; then
     log "error notification not sent: missing apprise"
