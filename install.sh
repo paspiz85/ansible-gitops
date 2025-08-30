@@ -12,6 +12,7 @@ DEFAULT_GIT_BRANCH="main"                                              # branch 
 DEFAULT_INVENTORY=""                                                   # percorso inventory Ansible di default (relativo al repo)
 DEFAULT_PLAYBOOK="playbooks/site.yml"                                  # percorso playbook Ansible di default (relativo al repo)
 DEFAULT_RUN_LOCAL=false
+DEFAULT_NOTIFICATION_URL=""                                            # url Apprise per le notifiche
 
 SERVICE_NAME="ansible-gitops"                                          # nome del servizio/systemd unit
 SERVICE_USER="ansible"                                                 # utente di sistema dedicato che esegue il servizio
@@ -22,19 +23,19 @@ GITOPS_DATA_DIR="/var/lib/${SERVICE_NAME}"                             # dati/ch
 GITOPS_LOG_DIR="/var/log/${SERVICE_NAME}"                              # directory dove salvare i log
 GITOPS_CONFIG_DIR="/etc/${SERVICE_NAME}"                               # directory di configurazione (.env, runner, notifiche)
 GITOPS_CONFIG_VAULT_KEY_FILENAME="ansible-vault.key"                   # file chiave di Ansible Vault
-GITOPS_CONFIG_NOTIFICATIONS_FILENAME="notifications.yml"               # file Apprise con gli URL di notifica
 GITOPS_CONFIG_RUNNER="${GITOPS_CONFIG_DIR}/${SERVICE_NAME}.sh"         # script runner lanciato dal servizio
 SILENT=false
 
 # ==========================
 # Parse opzioni CLI
 # ==========================
-while getopts "t:u:b:i:p:ls" opt; do
+while getopts "t:u:b:i:n:p:ls" opt; do
   case $opt in
     t) DEFAULT_TIMER_ACTIVATION="$OPTARG" ;;
     u) DEFAULT_GIT_URL="$OPTARG" ;;
     b) DEFAULT_GIT_BRANCH="$OPTARG" ;;
     i) DEFAULT_INVENTORY="$OPTARG" ;;
+    n) DEFAULT_NOTIFICATION_URL="$OPTARG" ;;
     p) DEFAULT_PLAYBOOK="$OPTARG" ;;
     l) DEFAULT_RUN_LOCAL=true ;;
     s) SILENT=true ;;
@@ -94,7 +95,6 @@ GITOPS_DATA_DIR="${GITOPS_DATA_DIR}"
 GITOPS_LOG_DIR="${GITOPS_LOG_DIR}"
 GITOPS_CONFIG_DIR="${GITOPS_CONFIG_DIR}"
 GITOPS_CONFIG_VAULT_KEY_FILENAME="${GITOPS_CONFIG_VAULT_KEY_FILENAME}"
-GITOPS_CONFIG_NOTIFICATIONS_FILENAME="${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}"
 SERVICE_USER="${SERVICE_USER}"
 
 while getopts "e:" opt; do
@@ -141,6 +141,7 @@ GIT_BRANCH="\${GIT_BRANCH:-\$DEFAULT_GIT_BRANCH}"
 INVENTORY="\${INVENTORY:-}"
 PLAYBOOK="\${PLAYBOOK:-\$DEFAULT_PLAYBOOK}"
 RUN_LOCAL=\${RUN_LOCAL:-false}
+NOTIFICATION_URL="\${NOTIFICATION_URL:-}"
 
 # Configura il comando SSH usato da git: chiave dedicata, niente agent forwarding, accetta nuove chiavi host
 export GIT_SSH_COMMAND="ssh -i \${GIT_SSH_KEY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
@@ -222,39 +223,19 @@ if (( STATUS != 0 )); then
   log "error"
   if ! command -v apprise >/dev/null 2>&1; then
     log "error notification not sent: missing apprise"
-  elif [[ ! -f "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}" ]]; then
-    log "error notification not sent: missing \${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}"
-  elif [ "\$(grep -cE '^[[:space:]]*-\s' "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}")" -eq 0 ]; then
-    log "error notification not sent: no config in \${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}"
+  elif [[ -z "\$NOTIFICATION_URL" ]]; then
+    log "error notification not sent: missing notification url"
   else
     MSG_BODY=\$(<"\$LOG_LINK")
     if [ "\${#MSG_BODY}" -gt 1900 ]; then
       MSG_BODY="\${MSG_BODY:\$((\${#MSG_BODY}-1900))}"
     fi
     MSG_BODY="\${MSG_BODY:=see log for details}"
-    apprise --config "\${GITOPS_CONFIG_DIR}/\${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}" -t "⚠️ GitOps \${GITOPS_CONFIG_NAME} error on \$(hostname)" -b "\${MSG_BODY}" || true
+    apprise -t "⚠️ GitOps \${GITOPS_CONFIG_NAME} error on \$(hostname)" -b "\${MSG_BODY}" "\${NOTIFICATION_URL}" || true
   fi
 fi
 EOF
 
-# Inizializzazione YAML per Apprise: inserirai qui gli URL dei canali (Slack/Telegram/ntfy/email...)
-if [[ ! -f "${GITOPS_CONFIG_DIR}/${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}" ]]; then
-  sudo tee "${GITOPS_CONFIG_DIR}/${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}" >/dev/null <<EOF
-# Each line is an Apprise notification "URL": you can add more than one.
-urls:
-# Examples (replace with your own tokens/chat IDs):
-# Slack:
-#  - slack://xoxb-123456-abcdefg@C12345678
-# Telegram:
-#  - tgram://BOT_TOKEN/CHAT_ID
-# Discord:
-#  - discord://WEBHOOK_ID/WEBHOOK_TOKEN
-# ntfy (public or self-hosted):
-#  - ntfy://ntfy.sh/your-topic
-# SMTP/email:
-#  - mailtos://user:pass@smtp.example.com:587/?from=gitops@example.com&to=ops@example.com
-EOF
-fi
 sudo chmod 0744 "${GITOPS_CONFIG_RUNNER}"
 sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_CONFIG_DIR}"
 
@@ -377,6 +358,7 @@ if [[ "$SILENT" == true ]]; then
   INVENTORY="${DEFAULT_INVENTORY}"
   PLAYBOOK="${DEFAULT_PLAYBOOK}"
   RUN_LOCAL=$DEFAULT_RUN_LOCAL
+  NOTIFICATION_URL="${DEFAULT_NOTIFICATION_URL}"
 else
   echo
   while true; do
@@ -405,6 +387,8 @@ else
     [yY]|[yY][eE][sS]) RUN_LOCAL=true ;;
     *) RUN_LOCAL=false ;;
   esac
+  read -r -p "Notification Apprise URL [${DEFAULT_NOTIFICATION_URL}]: " NOTIFICATION_URL
+  NOTIFICATION_URL="${NOTIFICATION_URL:-$DEFAULT_NOTIFICATION_URL}"
 fi
 
 # Trasforma l'URL SSH in uno HTTP (solo per mostrare le istruzioni su dove aggiungere la deploy key)
@@ -453,6 +437,9 @@ EOF
   if [[ "$RUN_LOCAL" == true ]]; then
     echo "RUN_LOCAL=true" | sudo -u ${SERVICE_USER} tee -a "${GITOPS_CONFIG_FILE}" >/dev/null
   fi
+  if [[ -n "${NOTIFICATION_URL:-}" ]]; then
+    echo "NOTIFICATION_URL=\"${NOTIFICATION_URL}\"" | sudo -u ${SERVICE_USER} tee -a "${GITOPS_CONFIG_FILE}" >/dev/null
+  fi
 fi
 
 # ==========================
@@ -470,8 +457,7 @@ EOF
 sudo -u ${SERVICE_USER} cat "${GIT_SSH_KEY}.pub"
 cat <<EOF
 
-If needed customize notifications/logrotate:
-  - ${GITOPS_CONFIG_DIR}/${GITOPS_CONFIG_NOTIFICATIONS_FILENAME}
+If needed customize logrotate:
   - /etc/logrotate.d/${SERVICE_NAME}
 
 Test the service manually:

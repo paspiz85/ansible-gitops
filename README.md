@@ -14,12 +14,6 @@ bash <(curl -fsSL https://raw.githubusercontent.com/paspiz85/ansible-gitops/main
 
 ---
 
-### ⚙️ Configurazione notifiche
-
-Per configurare le notifiche modificare il file ```/etc/ansible-gitops/notifications.yml```
-
----
-
 ### ▶️ Esecuzione manuale
 
 Per eseguire l'aggiornamento degli ambienti configurati:
