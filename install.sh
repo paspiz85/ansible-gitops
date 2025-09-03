@@ -47,14 +47,14 @@ done
 # ==========================
 if command -v apt >/dev/null 2>&1; then
   sudo apt update
-  sudo apt install -y git ansible logrotate apprise
+  sudo apt install -y git ansible moreutils logrotate apprise
 elif command -v dnf >/dev/null 2>&1; then
   sudo dnf install -y epel-release
-  sudo dnf install -y git ansible logrotate
+  sudo dnf install -y git ansible moreutils logrotate
 elif command -v yum >/dev/null 2>&1; then
-  sudo yum install -y git ansible logrotate
+  sudo yum install -y git ansible moreutils logrotate
 elif command -v zypper >/dev/null 2>&1; then
-  sudo zypper install -y git ansible logrotate
+  sudo zypper install -y git ansible moreutils logrotate
 else
   echo "Unsupported package manager. Install git/ansible manually." >&2
 fi
@@ -210,19 +210,7 @@ LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
     fi
     ARGS+=( "\$PLAYBOOK" )
     log "ansible-playbook running ..."
-
-    # PYTHONUNBUFFERED=1 \\
-    # ANSIBLE_STDOUT_CALLBACK=debug \\
-    # stdbuf -oL -eL ansible-playbook "\${ARGS[@]}" 2>&1 \\
-    # | stdbuf -oL -eL awk '{ print strftime("[%Y-%m-%dT%H:%M:%S%z]"), \$0; fflush()}' \\
-    # >> "\$LOG_FILE"
-
-    script -q -c "ansible-playbook \${ARGS[*]}" /dev/null 2>&1 \\
-    | awk '{ print strftime("[%Y-%m-%dT%H:%M:%S%z]"), \$0; fflush() }' \\
-    >> "\$LOG_FILE"
-
-    # ansible-playbook "\${ARGS[@]}" 2>&1 >> "\$LOG_FILE"
-
+    ANSIBLE_FORCE_COLOR=1 ansible-playbook "\${ARGS[@]}" 2>&1 | ts '[%Y-%m-%dT%H:%M:%S%z]' >> "\$LOG_FILE"
     log "ansible-playbook completed"
   else
     log "ansible-playbook skipped"
