@@ -217,7 +217,7 @@ LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
     # | stdbuf -oL -eL awk '{ print strftime("[%Y-%m-%dT%H:%M:%S%z]"), \$0; fflush()}' \\
     # >> "\$LOG_FILE"
 
-    script -q -c "ansible-playbook \${ARGS[@]}" /dev/null 2>&1 \\
+    script -q -c "ansible-playbook \${ARGS[*]}" /dev/null 2>&1 \\
     | awk '{ print strftime("[%Y-%m-%dT%H:%M:%S%z]"), \$0; fflush() }' \\
     >> "\$LOG_FILE"
 
