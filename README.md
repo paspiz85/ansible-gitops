@@ -12,6 +12,12 @@ Lanciare la procedura guidata con:
 bash <(curl -fsSL https://raw.githubusercontent.com/paspiz85/ansible-gitops/main/install.sh)
 ```
 
+Per aggiornare:
+
+```bash
+bash <(curl -fsSL -H 'Cache-Control: no-cache, no-store, must-revalidate' -H 'Pragma: no-cache' https://raw.githubusercontent.com/paspiz85/ansible-gitops/main/install.sh) -s
+```
+
 ---
 
 ### ▶️ Esecuzione manuale
