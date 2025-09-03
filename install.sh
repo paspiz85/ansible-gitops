@@ -210,8 +210,11 @@ LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
     fi
     ARGS+=( "\$PLAYBOOK" )
     log "ansible-playbook running ..."
-    # stdbuf: forza flushing riga-per-riga; awk: preprende timestamp ISO-8601 ad ogni riga
-    ansible-playbook "\${ARGS[@]}" 2>&1 | awk '{ print strftime("[%Y-%m-%dT%H:%M:%S%z]"), \$0 }' >>"\$LOG_FILE"
+    PYTHONUNBUFFERED=1 \
+    ANSIBLE_STDOUT_CALLBACK=debug \
+    stdbuf -oL -eL ansible-playbook "\${ARGS[@]}" 2>&1 \
+    | stdbuf -oL -eL awk '{ print strftime("[%Y-%m-%dT%H:%M:%S%z]"), \$0; fflush()}' \
+    >> "\$LOG_FILE"
     log "ansible-playbook completed"
   else
     log "ansible-playbook skipped"
