@@ -109,7 +109,7 @@ while [[ \$# -gt 0 ]]; do
       [[ -n "\${2:-}" ]] || { echo "Errore: -e richiede un argomento" >&2; exit 1; }
       GITOPS_CONFIG_NAME="\$2"
       shift 2
-      ;;q
+      ;;
     -r|--reset)
       ACTION="reset"
       shift
