@@ -97,16 +97,33 @@ GITOPS_CONFIG_DIR="${GITOPS_CONFIG_DIR}"
 GITOPS_CONFIG_VAULT_KEY_FILENAME="${GITOPS_CONFIG_VAULT_KEY_FILENAME}"
 SERVICE_USER="${SERVICE_USER}"
 
-while getopts "e:" opt; do
-  case \$opt in
-    e) GITOPS_CONFIG_NAME="\$OPTARG" ;;
-  esac
-done
-
 if [[ "\$EUID" -ne "\$(id -u "\$SERVICE_USER")" ]]; then
   echo "Error: this command can only be run by user \$SERVICE_USER" >&2
   exit 1
 fi
+
+ACTION=""
+while [[ \$# -gt 0 ]]; do
+  case "\$1" in
+    -e)
+      [[ -n "\${2:-}" ]] || { echo "Errore: -e richiede un argomento" >&2; exit 1; }
+      GITOPS_CONFIG_NAME="\$2"
+      shift 2
+      ;;
+    -r)
+    --reset)
+      ACTION="reset"
+      shift
+      ;;
+    --) shift; break ;;
+    -*)
+      echo "Unknown option: \$1" >&2; exit 1
+      ;;
+    *)
+      echo "Unknown argument: \$1" >&2; exit 1
+      ;;
+  esac
+done
 
 if [[ -z "\${GITOPS_CONFIG_NAME}" ]]; then
   echo "Usage: \$0 -e file.env" >&2
@@ -122,6 +139,11 @@ fi
 set -a
 . "\${GITOPS_CONFIG_FILE}"
 set +a
+
+if [[ "\$ACTION" == "reset" ]]; then
+  rm -rf "\${REPO_DIR}"
+  exit \$?
+fi
 
 GITOPS_CONFIG_NAME="\$(basename \$GITOPS_CONFIG_FILE)"
 
@@ -279,6 +301,7 @@ Type=oneshot
 User=${SERVICE_USER}
 Group=${SERVICE_USER}
 ExecStart=/bin/bash -c 'find ${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sort | xargs -r -n1 ${GITOPS_CONFIG_RUNNER} -e'
+ExecReload=/bin/bash -c 'find ${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sort | xargs -r -n1 ${GITOPS_CONFIG_RUNNER} --reset -e'
 StandardOutput=journal
 StandardError=journal
 
