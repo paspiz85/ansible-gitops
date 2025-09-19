@@ -31,7 +31,7 @@ sudo systemctl start ansible-gitops.service
 Se è necessario forzare l'esecuzione si può eliminare il repository locale, con:
 
 ```bash
-sudo systemctl reload ansible-gitops.service
+sudo rm -rf /var/lib/ansible-gitops/test-infra
 ```
 
 ---

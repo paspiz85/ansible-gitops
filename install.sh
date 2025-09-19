@@ -300,8 +300,6 @@ Type=oneshot
 User=${SERVICE_USER}
 Group=${SERVICE_USER}
 ExecStart=/bin/bash -c 'find ${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sort | xargs -r -n1 ${GITOPS_CONFIG_RUNNER} -e'
-ExecReload=/bin/bash -c 'find ${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sort | xargs -r -n1 ${GITOPS_CONFIG_RUNNER} --reset -e'
-RemainAfterExit=yes
 StandardOutput=journal
 StandardError=journal
 
