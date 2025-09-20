@@ -22,8 +22,8 @@ TIMER_PATH="/etc/systemd/system/${TIMER_NAME}.timer"                   # percors
 GITOPS_DATA_DIR="/var/lib/${SERVICE_NAME}"                             # dati/checkout dei repo per ciascuna istanza
 GITOPS_LOG_DIR="/var/log/${SERVICE_NAME}"                              # directory dove salvare i log
 GITOPS_CONFIG_DIR="/etc/${SERVICE_NAME}"                               # directory di configurazione (.env, runner, notifiche)
-GITOPS_CONFIG_VAULT_KEY_FILENAME="ansible-vault.key"                   # file chiave di Ansible Vault
-GITOPS_CONFIG_RUNNER="${GITOPS_CONFIG_DIR}/${SERVICE_NAME}.sh"         # script runner lanciato dal servizio
+GITOPS_CONFIG_RUNNER="/usr/local/sbin/${SERVICE_NAME}"                 # script runner lanciato dal servizio
+GITOPS_VAULT_KEY_FILENAME="ansible-vault.key"                          # file chiave di Ansible Vault
 SILENT=false
 
 # ==========================
@@ -73,15 +73,12 @@ SERVICE_USER_HOME=$(getent passwd ${SERVICE_USER} | cut -d: -f6)
 # ==========================
 # Cartelle dati, log, configurazioni ed eseguibile
 # ==========================
-sudo mkdir -p "${GITOPS_DATA_DIR}"
-sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_DATA_DIR}"
 sudo mkdir -p "${GITOPS_LOG_DIR}"
-sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_LOG_DIR}"
+sudo mkdir -p "${GITOPS_DATA_DIR}"
 sudo mkdir -p "${GITOPS_CONFIG_DIR}"
-if [ ! -f "${GITOPS_CONFIG_DIR}/${GITOPS_CONFIG_VAULT_KEY_FILENAME}" ]; then
-    openssl rand -base64 32 | sudo tee "${GITOPS_CONFIG_DIR}/${GITOPS_CONFIG_VAULT_KEY_FILENAME}" > /dev/null
+if [ ! -f "${GITOPS_DATA_DIR}/${GITOPS_VAULT_KEY_FILENAME}" ]; then
+    openssl rand -base64 32 | sudo tee "${GITOPS_DATA_DIR}/${GITOPS_VAULT_KEY_FILENAME}" > /dev/null
 fi
-sudo chmod 600 "${GITOPS_CONFIG_DIR}/${GITOPS_CONFIG_VAULT_KEY_FILENAME}"
 sudo tee "${GITOPS_CONFIG_RUNNER}" >/dev/null <<EOF
 #!/bin/bash
 
@@ -94,7 +91,7 @@ DEFAULT_PLAYBOOK="${DEFAULT_PLAYBOOK}"
 GITOPS_DATA_DIR="${GITOPS_DATA_DIR}"
 GITOPS_LOG_DIR="${GITOPS_LOG_DIR}"
 GITOPS_CONFIG_DIR="${GITOPS_CONFIG_DIR}"
-GITOPS_CONFIG_VAULT_KEY_FILENAME="${GITOPS_CONFIG_VAULT_KEY_FILENAME}"
+GITOPS_VAULT_KEY_FILENAME="${GITOPS_VAULT_KEY_FILENAME}"
 SERVICE_USER="${SERVICE_USER}"
 
 if [[ "\$EUID" -ne "\$(id -u "\$SERVICE_USER")" ]]; then
@@ -110,6 +107,10 @@ while [[ \$# -gt 0 ]]; do
       GITOPS_CONFIG_NAME="\$2"
       shift 2
       ;;
+    -l|--list)
+      ACTION="list"
+      shift
+      ;;
     -r|--reset)
       ACTION="reset"
       shift
@@ -124,27 +125,49 @@ while [[ \$# -gt 0 ]]; do
   esac
 done
 
+load_gitops_config() {
+  GITOPS_CONFIG_FILE="\${GITOPS_CONFIG_DIR}/\$1.env"
+  if [[ ! -f "\${GITOPS_CONFIG_FILE}" ]]; then
+    echo "Env file not found: \${GITOPS_CONFIG_FILE}" >&2
+    exit 1
+  fi
+
+  set -a
+  . "\${GITOPS_CONFIG_FILE}"
+  set +a
+}
+
+if [[ -n "\${GITOPS_CONFIG_NAME}" ]]; then
+  load_gitops_config "\${GITOPS_CONFIG_NAME}"
+fi
+
+if [[ "\$ACTION" == "list" ]]; then
+  find \${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sed 's/\.env$//' | sort 
+  exit 0
+elif [[ "\$ACTION" == "reset" ]]; then
+  if [[ -n "\${GITOPS_CONFIG_NAME}" ]]; then
+    if [[ -d "\${REPO_DIR}" ]]; then
+      rm -rf "\${REPO_DIR}"
+      exit \$?
+    elif
+      exit 0
+    fi
+  else
+    \${GITOPS_CONFIG_RUNNER} --list | while IFS= read -r line; do
+      REPO_DIR=
+      load_gitops_config "\$line"
+      if [[ -d "\${REPO_DIR}" ]]; then
+        rm -rf "\${REPO_DIR}"
+      fi
+    done
+    exit 0
+  fi
+fi
+
 if [[ -z "\${GITOPS_CONFIG_NAME}" ]]; then
-  echo "Usage: \$0 -e file.env" >&2
+  echo "Usage: \$0 -e envname" >&2
   exit 1
 fi
-
-GITOPS_CONFIG_FILE="\${GITOPS_CONFIG_DIR}/\$GITOPS_CONFIG_NAME"
-if [[ ! -f "\${GITOPS_CONFIG_FILE}" ]]; then
-  echo "Env file not found: \${GITOPS_CONFIG_FILE}" >&2
-  exit 1
-fi
-
-set -a
-. "\${GITOPS_CONFIG_FILE}"
-set +a
-
-if [[ "\$ACTION" == "reset" ]]; then
-  rm -rf "\${REPO_DIR}"
-  exit \$?
-fi
-
-GITOPS_CONFIG_NAME="\$(basename \$GITOPS_CONFIG_FILE)"
 
 log() {
   printf '%s\n' "GitOps \$GITOPS_CONFIG_NAME : \$*"
@@ -222,7 +245,7 @@ LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
     touch "\$LOG_FILE"
     ln -sfn "\$LOG_FILE" "\$LOG_LINK"
 
-    ARGS=( --vault-password-file "\$GITOPS_CONFIG_DIR/\$GITOPS_CONFIG_VAULT_KEY_FILENAME" )
+    ARGS=( --vault-password-file "\$GITOPS_DATA_DIR/\$GITOPS_VAULT_KEY_FILENAME" )
     if [[ -n "\${INVENTORY:-}" ]]; then
       ARGS+=( -i "\$INVENTORY" )
     fi
@@ -257,7 +280,10 @@ fi
 EOF
 
 sudo chmod 0744 "${GITOPS_CONFIG_RUNNER}"
+sudo chmod 600 "${GITOPS_DATA_DIR}/${GITOPS_VAULT_KEY_FILENAME}"
 sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_CONFIG_DIR}"
+sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_DATA_DIR}"
+sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_LOG_DIR}"
 
 # ==========================
 # Configurazione logrotate
@@ -299,7 +325,7 @@ After=network-online.target
 Type=oneshot
 User=${SERVICE_USER}
 Group=${SERVICE_USER}
-ExecStart=/bin/bash -c 'find ${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sort | xargs -r -n1 ${GITOPS_CONFIG_RUNNER} -e'
+ExecStart=/bin/bash -c 'find ${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sed 's/\.env$//' | sort | xargs -r -n1 ${GITOPS_CONFIG_RUNNER} -e'
 StandardOutput=journal
 StandardError=journal
 
