@@ -158,7 +158,7 @@ elif [[ "\$ACTION" == "reset" ]]; then
       exit 0
     fi
   else
-    \${GITOPS_CONFIG_RUNNER} --list | while IFS= read -r line; do
+    \$0 --list | while IFS= read -r line; do
       REPO_DIR=
       load_gitops_config "\$line"
       if [[ -d "\${REPO_DIR}" ]]; then
