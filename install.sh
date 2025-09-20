@@ -169,7 +169,7 @@ elif [[ "\$ACTION" == "reset" ]]; then
   fi
 fi
 
-if [[ "\$PPID" -ne 1 ]] || [[ "\$(cat /proc/1/comm 2>/dev/null)" != "systemd" ]]; then
+if [[ -z "\${INVOCATION_ID:-}" ]]; then
   echo "This script must be run by systemd" >&2
   exit 1
 fi
