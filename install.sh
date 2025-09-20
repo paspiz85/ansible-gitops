@@ -130,13 +130,6 @@ while [[ \$# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "\${ACTION}" ]]; then
-  if [[ "\$PPID" -ne 1 ]] || [[ "\$(cat /proc/1/comm 2>/dev/null)" != "systemd" ]]; then
-    echo "This script must be run by systemd" >&2
-    exit 1
-  fi
-fi
-
 load_gitops_config() {
   GITOPS_CONFIG_FILE="\${GITOPS_CONFIG_DIR}/\$1.env"
   if [[ ! -f "\${GITOPS_CONFIG_FILE}" ]]; then
@@ -174,6 +167,11 @@ elif [[ "\$ACTION" == "reset" ]]; then
     done
     exit 0
   fi
+fi
+
+if [[ "\$PPID" -ne 1 ]] || [[ "\$(cat /proc/1/comm 2>/dev/null)" != "systemd" ]]; then
+  echo "This script must be run by systemd" >&2
+  exit 1
 fi
 
 if [[ -z "\${GITOPS_CONFIG_NAME}" ]]; then
