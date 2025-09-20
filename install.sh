@@ -284,7 +284,7 @@ if [ "\$STATUS" -ne 0 ]; then
 fi
 EOF
 
-sudo chmod 0744 "${GITOPS_CONFIG_RUNNER}"
+sudo chmod 0755 "${GITOPS_CONFIG_RUNNER}"
 sudo chmod 600 "${GITOPS_DATA_DIR}/${GITOPS_VAULT_KEY_FILENAME}"
 sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_CONFIG_DIR}"
 sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_DATA_DIR}"
