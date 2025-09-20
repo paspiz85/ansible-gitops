@@ -147,7 +147,7 @@ if [[ -n "\${GITOPS_CONFIG_NAME}" ]]; then
 fi
 
 if [[ "\$ACTION" == "list" ]]; then
-  find \${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sed 's/\.env$//' | sort 
+  ls -1 "\${GITOPS_CONFIG_DIR}"/*.env 2>/dev/null | sed 's/\.env$//' | sort
   exit 0
 elif [[ "\$ACTION" == "reset" ]]; then
   if [[ -n "\${GITOPS_CONFIG_NAME}" ]]; then
