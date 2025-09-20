@@ -95,8 +95,13 @@ GITOPS_VAULT_KEY_FILENAME="${GITOPS_VAULT_KEY_FILENAME}"
 SERVICE_USER="${SERVICE_USER}"
 
 if [[ "\$EUID" -ne "\$(id -u "\$SERVICE_USER")" ]]; then
-  echo "Error: this command can only be run by user \$SERVICE_USER" >&2
-  exit 1
+  if [[ "\$EUID" -eq 0 ]]; then
+    # lo script è stato lanciato da root → rilancialo come SERVICE_USER
+    exec sudo -u "\$SERVICE_USER" "\$0" "\$@"
+  else
+    echo "Error: this command can only be run by user \$SERVICE_USER" >&2
+    exit 1
+  fi
 fi
 
 ACTION=""
