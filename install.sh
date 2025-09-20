@@ -154,7 +154,7 @@ elif [[ "\$ACTION" == "reset" ]]; then
     if [[ -d "\${REPO_DIR}" ]]; then
       rm -rf "\${REPO_DIR}"
       exit \$?
-    elif
+    else
       exit 0
     fi
   else
