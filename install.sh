@@ -147,7 +147,7 @@ if [[ -n "\${GITOPS_CONFIG_NAME}" ]]; then
 fi
 
 if [[ "\$ACTION" == "list" ]]; then
-  ls -1 "\${GITOPS_CONFIG_DIR}"/*.env 2>/dev/null | sed 's/\.env$//' | sort
+  ls -1 "\${GITOPS_CONFIG_DIR}"/*.env 2>/dev/null | xargs -r -n1 basename | sed 's/\.env$//' | sort
   exit 0
 elif [[ "\$ACTION" == "reset" ]]; then
   if [[ -n "\${GITOPS_CONFIG_NAME}" ]]; then
