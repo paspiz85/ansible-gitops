@@ -130,6 +130,13 @@ while [[ \$# -gt 0 ]]; do
   esac
 done
 
+if [[ -n "\${ACTION}" ]]; then
+  if [[ "\$PPID" -ne 1 ]] || [[ "\$(cat /proc/1/comm 2>/dev/null)" != "systemd" ]]; then
+    echo "This script must be run by systemd" >&2
+    exit 1
+  fi
+fi
+
 load_gitops_config() {
   GITOPS_CONFIG_FILE="\${GITOPS_CONFIG_DIR}/\$1.env"
   if [[ ! -f "\${GITOPS_CONFIG_FILE}" ]]; then
@@ -330,7 +337,7 @@ After=network-online.target
 Type=oneshot
 User=${SERVICE_USER}
 Group=${SERVICE_USER}
-ExecStart=/bin/bash -c 'find ${GITOPS_CONFIG_DIR} -maxdepth 1 -type f -name "*.env" -printf "%%f\n" | sed 's/\.env$//' | sort | xargs -r -n1 ${GITOPS_CONFIG_RUNNER} -e'
+ExecStart=/bin/bash -c '${GITOPS_CONFIG_RUNNER} --list | xargs -r -n1 ${GITOPS_CONFIG_RUNNER} -e'
 StandardOutput=journal
 StandardError=journal
 
