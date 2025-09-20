@@ -130,7 +130,7 @@ while [[ \$# -gt 0 ]]; do
   esac
 done
 
-if [[ -n "\${ACTION}" ]]; then
+if [[ -z "\${ACTION}" ]]; then
   if [[ "\$PPID" -ne 1 ]] || [[ "\$(cat /proc/1/comm 2>/dev/null)" != "systemd" ]]; then
     echo "This script must be run by systemd" >&2
     exit 1
