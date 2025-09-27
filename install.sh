@@ -256,6 +256,20 @@ LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
     ln -sfn "\$LOG_FILE" "\$LOG_LINK"
 
     ARGS=( --vault-password-file "\$GITOPS_DATA_DIR/\$GITOPS_VAULT_KEY_FILENAME" )
+    case "\$ANSIBLE_VERBOSITY" in
+      2)
+        ARGS+=( -vv )
+        ;;
+      3)
+        ARGS+=( -vvv )
+        ;;
+      4)
+        ARGS+=( -vvvv )
+        ;;
+      *)
+        ARGS+=( -v )
+        ;;
+    esac
     if [[ -n "\${INVENTORY:-}" ]]; then
       ARGS+=( -i "\$INVENTORY" )
     fi
@@ -485,6 +499,7 @@ REPO_DIR="${GITOPS_DATA_DIR}/${GITOPS_CONFIG_NAME}"
 GIT_SSH_KEY="${GIT_SSH_KEY}"
 GIT_URL="${GIT_URL}"
 GIT_BRANCH="${GIT_BRANCH}"
+ANSIBLE_VERBOSITY=1
 PLAYBOOK="${PLAYBOOK}"
 EOF
   if [[ -n "${INVENTORY:-}" ]]; then
