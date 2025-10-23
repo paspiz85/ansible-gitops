@@ -317,18 +317,29 @@ sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_LOG_DIR}"
 if [[ ! -f "/etc/logrotate.d/${SERVICE_NAME}" ]]; then
   sudo tee "/etc/logrotate.d/${SERVICE_NAME}" >/dev/null <<EOF
 /var/log/ansible-gitops/*.log {
-  daily                 # rotate every day
-  rotate 14             # keep 14 rotated files (about 2 weeks)
-  maxsize 50M           # rotate earlier if larger than 50MB
+  # rotate every day
+  daily
+  # keep 14 rotated files (about 2 weeks)
+  rotate 14
+  # rotate earlier if larger than 50MB
+  maxsize 50M
+  # no error if file missing
   missingok
+  # no rotate if file is empty
   notifempty
+  # compress old files
   compress
+  # compress from second file
   delaycompress
+  # use date for file extension instead of progress number
   dateext
+  # date format
   dateformat -%Y%m%d
-  su ansible ansible    # rotate with service's uid/gid
+  # rotate with service's uid/gid and permissions
+  su ansible ansible
   create 0640 ansible ansible
-  copytruncate          # truncate open file without killing the process
+  # truncate open file without killing the process
+  copytruncate
 }
 EOF
 fi
