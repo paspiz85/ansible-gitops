@@ -47,14 +47,14 @@ done
 # ==========================
 if command -v apt >/dev/null 2>&1; then
   sudo apt update
-  sudo apt install -y git ansible moreutils logrotate apprise
+  sudo apt install -y git ansible moreutils apprise
 elif command -v dnf >/dev/null 2>&1; then
   sudo dnf install -y epel-release
-  sudo dnf install -y git ansible moreutils logrotate
+  sudo dnf install -y git ansible moreutils
 elif command -v yum >/dev/null 2>&1; then
-  sudo yum install -y git ansible moreutils logrotate
+  sudo yum install -y git ansible moreutils
 elif command -v zypper >/dev/null 2>&1; then
-  sudo zypper install -y git ansible moreutils logrotate
+  sudo zypper install -y git ansible moreutils
 else
   echo "Unsupported package manager. Install git/ansible manually." >&2
 fi
@@ -205,6 +205,8 @@ export ANSIBLE_FORCE_COLOR=1
 export ANSIBLE_NOCOWS=1
 export ANSIBLE_COW_SELECTION=tux
 
+find "\${GITOPS_LOG_DIR}" -type f -name "*-\${GITOPS_CONFIG_NAME%.env}" -mtime +14 -delete
+
 LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
 (
   set -euo pipefail   # fallisci su errore/variabile non definita e pipe
@@ -308,41 +310,6 @@ sudo chmod 600 "${GITOPS_DATA_DIR}/${GITOPS_VAULT_KEY_FILENAME}"
 sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_CONFIG_DIR}"
 sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_DATA_DIR}"
 sudo chown -R "${SERVICE_USER}:${SERVICE_USER}" "${GITOPS_LOG_DIR}"
-
-# ==========================
-# Configurazione logrotate
-# ==========================
-# Regole di rotazione dei log del servizio (una volta al giorno, conserva ~2 settimane, comprime, ecc.)
-
-if [[ ! -f "/etc/logrotate.d/${SERVICE_NAME}" ]]; then
-  sudo tee "/etc/logrotate.d/${SERVICE_NAME}" >/dev/null <<EOF
-/var/log/ansible-gitops/*.log {
-  # rotate every day
-  daily
-  # keep 14 rotated files (about 2 weeks)
-  rotate 14
-  # rotate earlier if larger than 50MB
-  maxsize 50M
-  # no error if file missing
-  missingok
-  # no rotate if file is empty
-  notifempty
-  # compress old files
-  compress
-  # compress from second file
-  delaycompress
-  # use date for file extension instead of progress number
-  dateext
-  # date format
-  dateformat -%Y%m%d
-  # rotate with service's uid/gid and permissions
-  su ansible ansible
-  create 0640 ansible ansible
-  # truncate open file without killing the process
-  copytruncate
-}
-EOF
-fi
 
 # ==========================
 # Unit file systemd (service)
@@ -538,9 +505,6 @@ Now add the SSH key to your Git repository (deploy key/readonly):
 EOF
 sudo -u ${SERVICE_USER} cat "${GIT_SSH_KEY}.pub"
 cat <<EOF
-
-If needed customize logrotate:
-  - /etc/logrotate.d/${SERVICE_NAME}
 
 Test the service manually:
   sudo systemctl start ${SERVICE_NAME}.service

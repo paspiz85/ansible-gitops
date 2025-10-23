@@ -36,7 +36,6 @@ sudo rm -rf "${TIMER_PATH}"
 sudo systemctl daemon-reload
 sudo rm -rf "${SERVICE_PATH}"
 sudo systemctl daemon-reload
-sudo rm -rf "/etc/logrotate.d/${SERVICE_NAME}"
 sudo rm -rf "${GITOPS_DATA_DIR}"
 sudo rm -rf "${GITOPS_LOG_DIR}"
 sudo rm -rf "${GITOPS_CONFIG_DIR}"
