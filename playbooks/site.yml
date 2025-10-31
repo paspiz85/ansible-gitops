@@ -1,0 +1,16 @@
+---
+- name: Show memory usage
+  hosts: localhost
+  gather_facts: yes
+
+  tasks:
+    - name: Memory stats collection
+      set_fact:
+        total_mb: "{{ ansible_facts['memory_mb']['real']['total'] }}"
+        used_mb:  "{{ ansible_facts['memory_mb']['real']['used'] }}"
+        used_pct: "{{ (ansible_facts['memory_mb']['real']['used'] * 100.0
+                      / ansible_facts['memory_mb']['real']['total']) | round(2) }}"
+
+    - name: Debug message
+      debug:
+        msg: "Memory usage: {{ used_mb }} MiB / {{ total_mb }} MiB ({{ used_pct }}%)"
