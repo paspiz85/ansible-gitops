@@ -214,10 +214,11 @@ export ANSIBLE_COW_SELECTION=tux
 find "\${GITOPS_LOG_DIR}" -type f -mtime +\$LOG_RETENTION_DAYS -delete
 
 LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
-(
-  set -euo pipefail   # fallisci su errore/variabile non definita e pipe
+RUN_PLAYBOOK=0       # flag globale: 1 se abbiamo lanciato ansible-playbook
+STATUS=0             # codice di ritorno del blocco "critico"
 
-  RUN_PLAYBOOK=0      # flag: 1 se dobbiamo lanciare ansible-playbook
+{
+  set -euo pipefail   # fallisci su errore/variabile non definita e pipe
 
   if [[ ! -d "\${REPO_DIR}/.git" ]]; then
     # Primo run: clona il repo e poi esegui il playbook
@@ -253,7 +254,7 @@ LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
     exit 1
   fi
   if [[ ! -f "\$PLAYBOOK" ]]; then
-    log "playbook not found: \$PLAYBOOK" >&2;
+    log "playbook not found: \$PLAYBOOK" >&2
     exit 1
   fi
   if (( RUN_PLAYBOOK )); then
@@ -265,18 +266,10 @@ LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
 
     ARGS=( --vault-password-file "\$GITOPS_DATA_DIR/\$GITOPS_VAULT_KEY_FILENAME" )
     case "\$ANSIBLE_VERBOSITY" in
-      1)
-        ARGS+=( -v )
-        ;;
-      2)
-        ARGS+=( -vv )
-        ;;
-      3)
-        ARGS+=( -vvv )
-        ;;
-      4)
-        ARGS+=( -vvvv )
-        ;;
+      1) ARGS+=( -v ) ;;
+      2) ARGS+=( -vv ) ;;
+      3) ARGS+=( -vvv ) ;;
+      4) ARGS+=( -vvvv ) ;;
     esac
     if [[ -n "\${INVENTORY:-}" ]]; then
       ARGS+=( -i "\$INVENTORY" )
@@ -291,16 +284,18 @@ LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
   else
     log "ansible-playbook skipped"
   fi
-)
-STATUS=\$?
+} || STATUS=$?   # se qualcosa fallisce nel blocco, STATUS prende il codice di errore
+
 # Se il run è fallito, prova a inviare una notifica tramite Apprise (se presente e configurato)
 if [ "\$STATUS" -ne 0 ]; then
-  log "error"
-  if ! command -v apprise >/dev/null 2>&1; then
+  if (( RUN_PLAYBOOK )); then
+    log "error checking repository"
+  elif ! command -v apprise >/dev/null 2>&1; then
     log "error notification not sent: missing apprise"
   elif [[ -z "\$NOTIFICATION_URL" ]]; then
     log "error notification not sent: missing notification url"
   else
+    log "error"
     MSG_BODY=\$(<"\$LOG_LINK")
     if [ "\${#MSG_BODY}" -gt 1900 ]; then
       MSG_BODY="\${MSG_BODY:\$((\${#MSG_BODY}-1900))}"
