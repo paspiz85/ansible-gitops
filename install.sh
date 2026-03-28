@@ -72,7 +72,7 @@ EOF
 Defaults:${SERVICE_USER} umask=${UMASK},umask_override
 Defaults>${SERVICE_USER} umask=${UMASK},umask_override
 EOF
-  sudo chmod 600 /etc/sudoers.d/*
+  sudo chmod 440 /etc/sudoers.d/*
 fi
 SERVICE_USER_HOME=$(getent passwd ${SERVICE_USER} | cut -d: -f6)
 
