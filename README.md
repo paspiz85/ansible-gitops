@@ -1,10 +1,6 @@
 # ansible-gitops
 
-> [Italiano](#italiano) | [English](#english)
-
----
-
-## Italiano
+> [English version](#english)
 
 > Script di installazione del software di base per progetti GitOps.
 
@@ -112,7 +108,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/paspiz85/ansible-gitops/main
 
 ---
 
-## English
+# ansible-gitopt (english version)
 
 > Base software installation script for GitOps projects.
 
