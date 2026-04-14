@@ -40,6 +40,7 @@ while getopts "t:u:b:i:n:p:ls" opt; do
     p) DEFAULT_PLAYBOOK="$OPTARG" ;;
     l) DEFAULT_RUN_LOCAL=true ;;
     s) SILENT=true ;;
+    *) echo "Invalid option: -$opt" >&2; exit 1 ;;
   esac
 done
 
