@@ -1,6 +1,6 @@
 # ansible-gitops
 
-> [English version](#english)
+> [English version](#ansible-gitopt-english-version)
 
 > Script di installazione del software di base per progetti GitOps.
 
