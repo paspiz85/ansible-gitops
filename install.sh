@@ -291,7 +291,7 @@ STATUS=0             # codice di ritorno del blocco "critico"
 
 # Se il run è fallito, prova a inviare una notifica tramite Apprise (se presente e configurato)
 if [ "\$STATUS" -ne 0 ]; then
-  if (( RUN_PLAYBOOK )); then
+  if ! (( RUN_PLAYBOOK )); then
     log "error checking repository"
   elif ! command -v apprise >/dev/null 2>&1; then
     log "error notification not sent: missing apprise"
