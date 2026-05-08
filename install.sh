@@ -283,6 +283,11 @@ STATUS=0             # codice di ritorno del blocco "critico"
     ARGS+=( "\$PLAYBOOK" )
     log "ansible-playbook running ..."
     ANSIBLE_FORCE_COLOR=1 ansible-playbook "\${ARGS[@]}" 2>&1 | ts '[%Y-%m-%dT%H:%M:%S%z]' >> "\$LOG_FILE"
+    ANSIBLE_RC=\${PIPESTATUS[0]}
+    if (( ANSIBLE_RC != 0 )); then
+      log "ansible-playbook failed (rc=\$ANSIBLE_RC)"
+      exit "\$ANSIBLE_RC"
+    fi
     log "ansible-playbook completed"
   else
     log "ansible-playbook skipped"
