@@ -287,7 +287,7 @@ STATUS=0             # codice di ritorno del blocco "critico"
   else
     log "ansible-playbook skipped"
   fi
-} || STATUS=$?   # se qualcosa fallisce nel blocco, STATUS prende il codice di errore
+} || STATUS=\$?   # se qualcosa fallisce nel blocco, STATUS prende il codice di errore
 
 # Se il run è fallito, prova a inviare una notifica tramite Apprise (se presente e configurato)
 if [ "\$STATUS" -ne 0 ]; then
