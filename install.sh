@@ -220,7 +220,7 @@ LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
 RUN_PLAYBOOK=0       # flag globale: 1 se abbiamo lanciato ansible-playbook
 STATUS=0             # codice di ritorno del blocco "critico"
 
-(
+{
   set -euo pipefail   # fallisci su errore/variabile non definita e pipe
 
   if [[ ! -d "\${REPO_DIR}/.git" ]]; then
@@ -292,7 +292,7 @@ STATUS=0             # codice di ritorno del blocco "critico"
   else
     log "ansible-playbook skipped"
   fi
-) || STATUS=\$?   # se qualcosa fallisce nel blocco, STATUS prende il codice di errore
+} || STATUS=\$?   # se qualcosa fallisce nel blocco, STATUS prende il codice di errore
 
 # Se il run è fallito, prova a inviare una notifica tramite Apprise (se presente e configurato)
 if [ "\$STATUS" -ne 0 ]; then
