@@ -216,11 +216,13 @@ export ANSIBLE_COW_SELECTION=tux
 
 find "\${GITOPS_LOG_DIR}" -type f -mtime +\$LOG_RETENTION_DAYS -delete
 
+RUN_ID="\$(date +%Y%m%d-%H%M%S)-\${GITOPS_CONFIG_NAME%.env}"
+LOG_FILE="\${GITOPS_LOG_DIR}/\${RUN_ID}.log"
 LOG_LINK="\${GITOPS_LOG_DIR}/\${GITOPS_CONFIG_NAME%.env}.log"
 RUN_PLAYBOOK=0       # flag globale: 1 se abbiamo lanciato ansible-playbook
 STATUS=0             # codice di ritorno del blocco "critico"
 
-{
+(
   set -euo pipefail   # fallisci su errore/variabile non definita e pipe
 
   if [[ ! -d "\${REPO_DIR}/.git" ]]; then
@@ -262,8 +264,6 @@ STATUS=0             # codice di ritorno del blocco "critico"
   fi
   if (( RUN_PLAYBOOK )); then
     # Log: crea un file per run con timestamp e un link simbolico "ultimo.log" per consultazione rapida
-    RUN_ID="\$(date +%Y%m%d-%H%M%S)-\${GITOPS_CONFIG_NAME%.env}"
-    LOG_FILE="\${GITOPS_LOG_DIR}/\${RUN_ID}.log"
     touch "\$LOG_FILE"
     ln -sfn "\$LOG_FILE" "\$LOG_LINK"
 
@@ -292,7 +292,12 @@ STATUS=0             # codice di ritorno del blocco "critico"
   else
     log "ansible-playbook skipped"
   fi
-} || STATUS=\$?   # se qualcosa fallisce nel blocco, STATUS prende il codice di errore
+) || STATUS=\$?   # se qualcosa fallisce nel blocco, STATUS prende il codice di errore
+
+# Se LOG_FILE esiste su disco, ansible-playbook è stato avviato in questa run
+if [[ -f "\$LOG_FILE" ]]; then
+  RUN_PLAYBOOK=1
+fi
 
 # Se il run è fallito, prova a inviare una notifica tramite Apprise (se presente e configurato)
 if [ "\$STATUS" -ne 0 ]; then
@@ -304,7 +309,7 @@ if [ "\$STATUS" -ne 0 ]; then
     log "error notification not sent: missing notification url"
   else
     log "error"
-    MSG_BODY=\$(<"\$LOG_LINK")
+    MSG_BODY=\$(<"\$LOG_FILE")
     if [ "\${#MSG_BODY}" -gt 1900 ]; then
       MSG_BODY="\${MSG_BODY:\$((\${#MSG_BODY}-1900))}"
     fi
